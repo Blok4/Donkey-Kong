@@ -12,7 +12,7 @@ class Menu(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        oImage = QImage("images\\menu")
+        oImage = QImage("images\\mmenu")
 
         self.label = QLabel(self)
         self.label1Player = QLabel(self)
@@ -41,17 +41,17 @@ class Menu(QMainWindow):
         self.setWindowTitle("Menu")
 
         button4 = QPushButton('QUIT', self)
-        button4.resize(330, 43)
-        button4.move(330, 316)
+        button4.resize(395, 43)
+        button4.move(320, 420)
 
         button4.clicked.connect(self.quit_on_click)
 
         self.label1Player.setPixmap(self.oneplayer)
-        self.label1Player.setGeometry(300, 210, 395, 43)
+        self.label1Player.setGeometry(320, 320, 395, 43)
         self.label1Player.mousePressEvent = self.one_players_on_click
 
         self.label2Player.setPixmap(self.twoplayer)
-        self.label2Player.setGeometry(300, 263, 395, 43)
+        self.label2Player.setGeometry(320, 370, 395, 43)
         self.label2Player.mousePressEvent = self.two_players_on_click
 
         self.show()
