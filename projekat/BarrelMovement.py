@@ -1,11 +1,11 @@
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
 import time
+from random import randint
 
 
-class GorilaMovement(QObject):
-
-    gorilaMovementSignal = pyqtSignal()
+class BarrelMovement(QObject):
+    barrelMovementSignal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -38,5 +38,6 @@ class GorilaMovement(QObject):
         A slot with no params.
         """
         while True:
-            self.gorilaMovementSignal.emit()
-            time.sleep(0.2)
+            self.barrelMovementSignal.emit()
+            time.sleep(0.1)
+

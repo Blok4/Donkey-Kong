@@ -5,10 +5,12 @@ from PyQt5.QtGui import QPixmap, QImage, QPalette, QBrush
 from PyQt5.QtWidgets import QWidget, QLabel, QApplication, QMainWindow
 from GorilaMovement import GorilaMovement
 from JasminMovement import JasminMovement
-import time
+from pomocniFajl import isHit, generateBarrel, GorilaFreezeProcess
+from multiprocessing import Queue, Process
+from BarrelMovement import BarrelMovement
+from random import randint
 
 brLevel = 0
-i = 0
 
 class SimMoveDemo(QMainWindow):
 
@@ -29,28 +31,25 @@ class SimMoveDemo(QMainWindow):
         self.pix22 = QPixmap('images\\pll')
 
         self.pix3 = QPixmap('images\\gl')
-        self.pixBottleR = QPixmap('images\\bl.png')
-        self.pixBottleL = QPixmap('images\\br.png')
+
         self.pix32 = QPixmap('images\\gr')
         self.izadji = QPixmap('images\\quit')
+        self.pix4 = QPixmap('images\\barell')
 
         self.hitSide = False
 
         self.label2 = QLabel(self)
         self.label4 = QLabel(self)
-        self.label5 = QLabel(self)
-        self.label6 = QLabel(self)
-        self.label7 = QLabel(self)
         self.label3 = QLabel(self)
         self.label30 = QLabel(self)
-        self.labelScore = QLabel(self)
+
         self.labelLifes1 = QLabel(self)
         self.labelLifes2 = QLabel(self)
         self.life1ispis = QLabel(self)
         self.life2ispis = QLabel(self)
         self.label1 = QLabel(self)
         self.label11 = QLabel(self)
-        self.one = None
+        #self.one = None
 
         self.labelLevel = QLabel(self)
         self.ispisLabel1 = QLabel(self)
@@ -60,6 +59,17 @@ class SimMoveDemo(QMainWindow):
         self.playerRez22 = QLabel(self)
         self.gameoverLab = QLabel(self)
         self.izlazIzIgre = QLabel(self)
+
+        self.barrelQueue = Queue()
+        self.barrelProcess = Process(target=generateBarrel, args=[self.barrelQueue])
+        self.barrels = []
+        self.barrelProcess.start()
+        self.gorilaStop = Queue()
+        self.gorilaStart = Queue()
+        self.gorilaBug = Process(target=GorilaFreezeProcess, args=[self.gorilaStart, self.gorilaStop])
+        self.gorilaBug.start()
+
+        self.zaustavio = False
 
         self.poeniPL1 = 0
         self.poeniPL2 = 0
@@ -112,10 +122,6 @@ class SimMoveDemo(QMainWindow):
         font = QtGui.QFont()
         font.setPointSize(20)
 
-#        self.labelScore.setText(str(0))
- #       self.labelScore.setGeometry(25, 17, 100, 100)
-  #      self.labelScore.setFont(font)
-
         self.labelLevel.setText(str(self.trenutniNivo))
         self.labelLevel.setGeometry(110, 5, 50, 50)
         self.labelLevel.setFont(font)
@@ -141,7 +147,11 @@ class SimMoveDemo(QMainWindow):
         self.playerRez1.setStyleSheet('color: red')
         self.playerRez11.setFont(font)
 
+        self.brojIgracaJedan = True
+
         if (brojIgraca == 2):
+            self.brojIgracaJedan = False
+
             self.playerRez2.setGeometry(2, 110, 100, 100)
             self.playerRez22.setGeometry(110, 110, 100, 100)
             self.playerRez2.setFont(font)
@@ -167,6 +177,10 @@ class SimMoveDemo(QMainWindow):
         self.gorilaMovement = GorilaMovement()
         self.gorilaMovement.gorilaMovementSignal.connect(self.moveGorila)
         self.gorilaMovement.start()
+
+        self.movingBarrels = BarrelMovement()
+        self.movingBarrels.barrelMovementSignal.connect(self.moveBarrels)
+        self.movingBarrels.start()
 
         self.show()
 
@@ -194,11 +208,79 @@ class SimMoveDemo(QMainWindow):
         else:
             self.label3.setGeometry(rec2.x() + 10, rec2.y(), rec2.width(), rec2.height())
 
+        if isHit(self.label1, self.label3):
+            self.lives1 -= 1
+            self.labelLifes1.setText(str(self.lives1))
+            if self.lives1 == 0:
+                self.close()
+
+        if isHit(self.label30, self.label3):
+            self.lives2 -= 1
+            self.labelLifes2.setText(str(self.lives2))
+            if self.lives2 == 0:
+                self.close()
+
+        if not self.zaustavio:
+            self.gorilaStop.put(1)
+            self.zaustavio = True
+            return
+        else:
+            if self.gorilaStart.empty():
+                return
+            else:
+                a = self.gorilaStart.get()
+            self.zaustavio = False
+
+    def moveBarrels(self):
+        rec = self.label3.geometry()
+
+        a = randint(0, 100)
+        if a % 12 == 0:
+            barrel = QLabel(self)
+            self.barrels.append(barrel)
+            self.barrels[len(self.barrels) - 1].setPixmap(self.pix4)
+            self.barrels[len(self.barrels) - 1].setGeometry(rec.x(), rec.y(), 40, 40)
+            self.barrels[len(self.barrels) - 1].show()
+
+        for barrel in self.barrels:
+            recb = barrel.geometry()
+            barrel.setGeometry(recb.x(), recb.y() + 10, recb.width(), recb.height())
+
+            if recb.y() > 600:
+                barrel.hide()
+                self.barrels.remove(barrel)
+
+            if isHit(barrel, self.label1):
+                self.lives1 -= 1
+                self.labelLifes1.setText(str(self.lives1))
+                barrel.hide()
+                self.barrels.remove(barrel)
+
+                if self.lives1 == 0:
+                    if self.brojIgracaJedan:
+                        self.close()
+                    else:
+                        self.close()
+
+            if isHit(barrel, self.label30):
+                self.lives2 -= 1
+                self.labelLifes2.setText(str(self.lives2))
+                barrel.hide()
+                self.barrels.remove(barrel)
+
+                if self.lives2 == 0:
+                    self.close()
+
     def closeEvent(self, event):
         self.jasminMovement.die()
         self.gorilaMovement.die()
+        self.barrelProcess.terminate()
+        self.movingBarrels.die()
+        self.gorilaBug.terminate()
 
     def shutdown(self, event):
+        self.barrelProcess.terminate()
+        self.gorilaBug.terminate()
         self.close()
 
 if __name__ == '__main__':
