@@ -39,4 +39,4 @@ class JasminMovement(QObject):
         """
         while True:
             self.jasminMovementSignal.emit()
-            time.sleep(1)
+            time.sleep(2)

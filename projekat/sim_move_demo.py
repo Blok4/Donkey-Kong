@@ -9,6 +9,8 @@ from pomocniFajl import isHit, generateBarrel, GorilaFreezeProcess
 from multiprocessing import Queue, Process
 from BarrelMovement import BarrelMovement
 from random import randint
+from key_notifier import KeyNotifier
+from key_notifier2 import KeyNotifier2
 
 brLevel = 0
 
@@ -17,7 +19,7 @@ class SimMoveDemo(QMainWindow):
     def __init__(self, brojIgraca, lvlNumber):
         super().__init__()
 
-        oImage = QImage("images\\bb")
+        oImage = QImage("images\\back")
         sImage = oImage.scaled(QSize(1000, 562))  # resize Image to widgets size
         palette = QPalette()
         palette.setBrush(10, QBrush(sImage))  # 10 = Windowrole
@@ -98,6 +100,20 @@ class SimMoveDemo(QMainWindow):
         self.width = 1000
         self.height = 562
 
+        self.key_notifier = KeyNotifier()
+
+        if (brojIgraca == 1):
+            self.key_notifier.key_signal.connect(self.__update_position__)  # -----------------
+            self.brojIgracaJedan = True
+        else:
+            self.brojIgracaJedan = False
+            self.key_notifier2 = KeyNotifier2()
+            self.key_notifier.key_signal.connect(self.__update_position__)  # -----------------
+            self.key_notifier2.key_signal2.connect(self.__update_position2__)  # -----------------
+            self.key_notifier2.start()
+
+        self.key_notifier.start()
+
         self.__init_ui__(brLevel, brojIgraca)
 
     def __init_ui__(self, brLevel, brojIgraca):
@@ -110,6 +126,7 @@ class SimMoveDemo(QMainWindow):
 
         self.label2.setPixmap(self.pix2)
         self.label2.setGeometry(475, -15, 75, 100)
+        self.promenioSliku = True
 
         self.label3.setPixmap(self.pix3)
         self.label3.setGeometry(455, 75, 75, 100)
@@ -147,8 +164,6 @@ class SimMoveDemo(QMainWindow):
         self.playerRez1.setStyleSheet('color: red')
         self.playerRez11.setFont(font)
 
-        self.brojIgracaJedan = True
-
         if (brojIgraca == 2):
             self.brojIgracaJedan = False
 
@@ -184,14 +199,108 @@ class SimMoveDemo(QMainWindow):
 
         self.show()
 
+    def keyPressEvent(self, event):
+        a = event.key()
+        self.key_notifier.add_key(a)
+        if (self.brojIgracaJedan == False):
+            b = event.key()
+            self.key_notifier2.add_key(b)
+
+    def keyReleaseEvent(self, event):
+        a = event.key()
+        self.key_notifier.rem_key(a)
+        if (self.brojIgracaJedan == False):
+            b = event.key()
+            self.key_notifier2.rem_key(b)
+
+    def __update_position__(self, key):
+        rec1 = self.label1.geometry()
+
+        if key == Qt.Key_Right:
+            self.label1.setPixmap(self.pix11)
+        elif key == Qt.Key_Left:
+            self.label1.setPixmap(self.pix1)
+
+        if key == Qt.Key_Right and rec1.x() <= 660:
+            self.label1.setGeometry(rec1.x() + 10, rec1.y(), rec1.width(), rec1.height())
+        elif key == Qt.Key_Left and rec1.x() >= 280:
+            self.label1.setGeometry(rec1.x() - 10, rec1.y(), rec1.width(), rec1.height())
+        elif key == Qt.Key_Up:
+            if (rec1.x() >= 445 and rec1.x() <= 465 and rec1.y() > 385 and rec1.y() <= 475):
+                 self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 290  and rec1.x() <= 310 and rec1.y() > 295 and rec1.y() <= 385):
+                self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 620 and rec1.x() <= 640 and rec1.y() > 205 and rec1.y() <= 295):
+                self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 320 and rec1.x() <= 340 and rec1.y() > 115 and rec1.y() <= 205):
+                self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 400 and rec1.x() <= 420 and rec1.y() > 25 and rec1.y() <= 115):
+                self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+        elif key == Qt.Key_Down:
+            if (rec1.x() >= 445 and rec1.x() <= 465 and rec1.y() >= 385 and rec1.y() < 475):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 290 and rec1.x() <= 310 and rec1.y() >= 295 and rec1.y() < 385):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 620 and rec1.x() <= 640 and rec1.y() >= 205 and rec1.y() < 295):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 320 and rec1.x() <= 340 and rec1.y() >= 115 and rec1.y() < 205):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 400 and rec1.x() <= 420 and rec1.y() >= 25 and rec1.y() < 115):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+
+
+    def __update_position2__(self, key):
+        rec2 = self.label30.geometry()
+
+        if key == Qt.Key_D:
+            self.label30.setPixmap(self.pix112)
+        elif key == Qt.Key_A:
+            self.label30.setPixmap(self.pix12)
+
+        if key == Qt.Key_D and rec2.x() <= 660:
+            self.label30.setGeometry(rec2.x() + 10, rec2.y(), rec2.width(), rec2.height())
+        elif key == Qt.Key_A and rec2.x() >= 280:
+            self.label30.setGeometry(rec2.x() - 10, rec2.y(), rec2.width(), rec2.height())
+        elif key == Qt.Key_W:
+            if (rec2.x() >= 445 and rec2.x() <= 465 and rec2.y() > 385 and rec2.y() <= 475):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 290 and rec2.x() <= 310 and rec2.y() > 295 and rec2.y() <= 385):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 620 and rec2.x() <= 640 and rec2.y() > 205 and rec2.y() <= 295):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 320 and rec2.x() <= 340 and rec2.y() > 115 and rec2.y() <= 205):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 400 and rec2.x() <= 420 and rec2.y() > 25 and rec2.y() <= 115):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+        elif key == Qt.Key_S:
+            if (rec2.x() >= 445 and rec2.x() <= 465 and rec2.y() >= 385 and rec2.y() < 475):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 290 and rec2.x() <= 310 and rec2.y() >= 295 and rec2.y() < 385):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 620 and rec2.x() <= 640 and rec2.y() >= 205 and rec2.y() < 295):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 320 and rec2.x() <= 340 and rec2.y() >= 115 and rec2.y() < 205):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 400 and rec2.x() <= 420 and rec2.y() >= 25 and rec2.y() < 115):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+
     def moveJasmin(self):
-        self.label2.setPixmap(self.pix22)
         self.timerP1 = QTimer(self)
         self.timerP1.start(2000)
         self.timerP1.timeout.connect(self.menjajSliku)
 
+        if isHit(self.label2, self.label1):
+            self.newLevel()
+        elif isHit(self.label2, self.label30):
+            self.newLevel()
+
     def menjajSliku(self):
-        self.label2.setPixmap(self.pix2)
+        if self.promenioSliku:
+            self.label2.setPixmap(self.pix22)
+            self.promenioSliku = False
+        else:
+            self.label2.setPixmap(self.pix2)
+            self.promenioSliku = True
 
     def moveGorila(self):
         rec2 = self.label3.geometry()
@@ -277,10 +386,21 @@ class SimMoveDemo(QMainWindow):
         self.barrelProcess.terminate()
         self.movingBarrels.die()
         self.gorilaBug.terminate()
+        self.key_notifier.die()
+        self.key_notifier2.die()
 
     def shutdown(self, event):
         self.barrelProcess.terminate()
         self.gorilaBug.terminate()
+        self.close()
+
+    def newLevel(self):
+        if self.brojIgracaJedan:
+            x = 1
+        else:
+            x = 2
+
+        self.one = SimMoveDemo(x, self.trenutniNivo + 1)
         self.close()
 
 if __name__ == '__main__':

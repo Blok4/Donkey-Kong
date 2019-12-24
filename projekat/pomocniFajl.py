@@ -24,7 +24,7 @@ def isHit(first, second):
 
 def generateBarrel(q):
     while True:
-       q.put(1)
+       #q.put(1)
        time.sleep((randint(8, 12)))
 
 def GorilaFreezeProcess(start, stop):

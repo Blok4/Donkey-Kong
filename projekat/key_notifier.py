@@ -1,16 +1,17 @@
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
 import time
-from random import randint
 
 
-class BarrelMovement(QObject):
-    barrelMovementSignal = pyqtSignal()
+class KeyNotifier(QObject):
+
+    key_signal = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
 
-        #self.is_done = False
+        self.keys = []
+        self.is_done = False
 
         self.thread = QThread()
         # move the Worker object to the Thread object
@@ -25,11 +26,18 @@ class BarrelMovement(QObject):
         """
         self.thread.start()
 
+    def add_key(self, key):
+        self.keys.append(key)
+
+    def rem_key(self, key):
+        if len(self.keys) > 0:
+            self.keys.remove(key)
+
     def die(self):
         """
         End notifications.
         """
-        #self.is_done = True
+        self.is_done = True
         self.thread.quit()
 
     @pyqtSlot()
@@ -37,7 +45,7 @@ class BarrelMovement(QObject):
         """
         A slot with no params.
         """
-        while True:
-            self.barrelMovementSignal.emit()
-            time.sleep(0.5)
-
+        while not self.is_done:
+            for k in self.keys:
+                self.key_signal.emit(k)
+            time.sleep(0.05)
