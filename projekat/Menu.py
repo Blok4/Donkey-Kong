@@ -35,7 +35,7 @@ class Menu(QMainWindow):
 
     def __init_ui__(self):
         self.setGeometry(self.left, self.top, self.width, self.height)
-        self.setWindowIcon(QtGui.QIcon('smr.png'))
+        self.setWindowIcon(QtGui.QIcon('images\\smr.png'))
         
 
         self.setWindowTitle("Menu")

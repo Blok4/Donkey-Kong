@@ -11,6 +11,8 @@ from BarrelMovement import BarrelMovement
 from random import randint
 from key_notifier import KeyNotifier
 from key_notifier2 import KeyNotifier2
+from Force import HeartsMovement
+from GameOver import GameOver
 
 brLevel = 0
 
@@ -34,6 +36,7 @@ class SimMoveDemo(QMainWindow):
 
         self.pix3 = QPixmap('images\\gl')
 
+        self.srce = QPixmap('images\\heart.png')
         self.pix32 = QPixmap('images\\gr')
         self.izadji = QPixmap('images\\quit')
         self.pix4 = QPixmap('images\\barell')
@@ -51,7 +54,8 @@ class SimMoveDemo(QMainWindow):
         self.life2ispis = QLabel(self)
         self.label1 = QLabel(self)
         self.label11 = QLabel(self)
-        self.one = None
+
+        self.kraj = None
 
         self.labelLevel = QLabel(self)
         self.ispisLabel1 = QLabel(self)
@@ -71,10 +75,18 @@ class SimMoveDemo(QMainWindow):
         self.gorilaBug = Process(target=GorilaFreezeProcess, args=[self.gorilaStart, self.gorilaStop])
         self.gorilaBug.start()
 
+        self.hearts = []
+
         self.zaustavio = False
 
+        self.heart = QLabel(self)
+        self.heart.setPixmap(self.srce)
+
         self.prvi = False
-        self.drugi = False
+        self.drugi = False # da li su pobedili
+
+        self.izgubioPrvi = False
+        self.izgubioDrugi = False
 
         self.prviSprat = False
 
@@ -130,11 +142,11 @@ class SimMoveDemo(QMainWindow):
         self.label1.setGeometry(280, 475, 57, 67)
 
         self.label2.setPixmap(self.pix2)
-        self.label2.setGeometry(475, -15, 75, 100)
+        self.label2.setGeometry(475, 0, 40, 75)
         self.promenioSliku = True
 
         self.label3.setPixmap(self.pix3)
-        self.label3.setGeometry(455, 75, 75, 100)
+        self.label3.setGeometry(455, 85, 70, 75)
 
         self.izlazIzIgre.setPixmap(self.izadji)
         self.izlazIzIgre.setGeometry(750, 50, 250, 47)
@@ -202,6 +214,10 @@ class SimMoveDemo(QMainWindow):
         self.movingBarrels.barrelMovementSignal.connect(self.moveBarrels)
         self.movingBarrels.start()
 
+        self.heartsMovement = HeartsMovement()
+        self.heartsMovement.heartsMovementSignal.connect(self.generateForce)
+        self.heartsMovement.start()
+
         self.show()
 
     def keyPressEvent(self, event):
@@ -226,64 +242,62 @@ class SimMoveDemo(QMainWindow):
         elif key == Qt.Key_Left:
             self.label1.setPixmap(self.pix1)
 
-        if key == Qt.Key_Right and rec1.x() <= 660 and (rec1.y() == 475 or rec1.y() == 385 or rec1.y() == 295 or rec1.y() == 205 or rec1.y() == 115 or rec1.y() == -15):
-            self.label1.setGeometry(rec1.x() + 10, rec1.y(), rec1.width(), rec1.height())
-        elif key == Qt.Key_Left and rec1.x() >= 280 and (rec1.y() == 475 or rec1.y() == 385 or rec1.y() == 295 or rec1.y() == 205 or rec1.y() == 115 or rec1.y() == -15):
-            self.label1.setGeometry(rec1.x() - 10, rec1.y(), rec1.width(), rec1.height())
+        if key == Qt.Key_Right and rec1.x() <= 660 and (rec1.y() == 475 or (rec1.y() == 385 and rec1.x() <= 640) or (rec1.y() == 290 and rec1.x() <= 630) or (rec1.y() == 195 and rec1.x() <= 610) or (rec1.y() == 95 and rec1.x() <= 580) or (rec1.y() == 0 and rec1.x() <= 540)):
+            self.label1.setGeometry(rec1.x() + 5, rec1.y(), rec1.width(), rec1.height())
+        elif key == Qt.Key_Left and rec1.x() >= 290 and (rec1.y() == 475 or (rec1.y() == 385 and rec1.x() >= 300) or (rec1.y() == 290 and rec1.x() >= 310) or (rec1.y() == 195 and rec1.x() >= 330) or (rec1.y() == 95 and rec1.x() >= 340) or (rec1.y() == 0 and rec1.x() >= 380)):
+            self.label1.setGeometry(rec1.x() - 5, rec1.y(), rec1.width(), rec1.height())
         elif key == Qt.Key_Up:
             if (rec1.x() >= 445 and rec1.x() <= 465 and rec1.y() > 385 and rec1.y() <= 475):
-                 self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+                 self.label1.setGeometry(rec1.x(), rec1.y() - 5, rec1.width(), rec1.height())
                  if rec1.y() == 395:
                      self.poeniPL1 += 1
                      self.playerRez11.setText(str(self.poeniPL1))
-            elif (rec1.x() >= 290  and rec1.x() <= 310 and rec1.y() > 295 and rec1.y() <= 385):
-                self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 290  and rec1.x() <= 310 and rec1.y() > 290 and rec1.y() <= 385):
+                self.label1.setGeometry(rec1.x(), rec1.y() - 5, rec1.width(), rec1.height())
                 if rec1.y() == 305:
                     self.poeniPL1 += 1
                     self.playerRez11.setText(str(self.poeniPL1))
-            elif (rec1.x() >= 620 and rec1.x() <= 640 and rec1.y() > 205 and rec1.y() <= 295):
-                self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 620 and rec1.x() <= 640 and rec1.y() > 195 and rec1.y() <= 290):
+                self.label1.setGeometry(rec1.x(), rec1.y() - 5, rec1.width(), rec1.height())
                 if rec1.y() == 215:
                     self.poeniPL1 += 1
                     self.playerRez11.setText(str(self.poeniPL1))
-            elif (rec1.x() >= 320 and rec1.x() <= 340 and rec1.y() > 115 and rec1.y() <= 205):
-                self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 320 and rec1.x() <= 340 and rec1.y() > 95 and rec1.y() <= 195):
+                self.label1.setGeometry(rec1.x(), rec1.y() - 5, rec1.width(), rec1.height())
                 if rec1.y() == 125:
                     self.poeniPL1 += 1
                     self.playerRez11.setText(str(self.poeniPL1))
-            elif (rec1.x() >= 400 and rec1.x() <= 420 and rec1.y() > -15 and rec1.y() <= 115):
-                self.label1.setGeometry(rec1.x(), rec1.y() - 10, rec1.width(), rec1.height())
-                if rec1.y() == -5:
+            elif (rec1.x() >= 400 and rec1.x() <= 420 and rec1.y() > 0 and rec1.y() <= 95):
+                self.label1.setGeometry(rec1.x(), rec1.y() - 5, rec1.width(), rec1.height())
+                if rec1.y() == 5:
                     self.poeniPL1 += 1
                     self.playerRez11.setText(str(self.poeniPL1))
         elif key == Qt.Key_Down:
             if (rec1.x() >= 445 and rec1.x() <= 465 and rec1.y() >= 385 and rec1.y() < 475):
-                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+                self.label1.setGeometry(rec1.x(), rec1.y() + 5, rec1.width(), rec1.height())
                 if rec1.y() == 395:
                     self.poeniPL1 -= 1
                     self.playerRez11.setText(str(self.poeniPL1))
-            elif (rec1.x() >= 290 and rec1.x() <= 310 and rec1.y() >= 295 and rec1.y() < 385):
-                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 290 and rec1.x() <= 310 and rec1.y() >= 290 and rec1.y() < 385):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 5, rec1.width(), rec1.height())
                 if rec1.y() == 305:
                     self.poeniPL1 -= 1
                     self.playerRez11.setText(str(self.poeniPL1))
-            elif (rec1.x() >= 620 and rec1.x() <= 640 and rec1.y() >= 205 and rec1.y() < 295):
-                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 620 and rec1.x() <= 640 and rec1.y() >= 195 and rec1.y() < 290):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 5, rec1.width(), rec1.height())
                 if rec1.y() == 215:
                     self.poeniPL1 -= 1
                     self.playerRez11.setText(str(self.poeniPL1))
-            elif (rec1.x() >= 320 and rec1.x() <= 340 and rec1.y() >= 115 and rec1.y() < 205):
-                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
+            elif (rec1.x() >= 320 and rec1.x() <= 340 and rec1.y() >= 95 and rec1.y() < 195):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 5, rec1.width(), rec1.height())
                 if rec1.y() == 125:
                     self.poeniPL1 -= 1
                     self.playerRez11.setText(str(self.poeniPL1))
-            elif (rec1.x() >= 400 and rec1.x() <= 420 and rec1.y() >= -15 and rec1.y() < 115):
-                self.label1.setGeometry(rec1.x(), rec1.y() + 10, rec1.width(), rec1.height())
-                if rec1.y() == -5:
+            elif (rec1.x() >= 400 and rec1.x() <= 420 and rec1.y() >= 0 and rec1.y() < 95):
+                self.label1.setGeometry(rec1.x(), rec1.y() + 5, rec1.width(), rec1.height())
+                if rec1.y() == 5:
                     self.poeniPL1 -= 1
                     self.playerRez11.setText(str(self.poeniPL1))
-
-
 
 
     def __update_position2__(self, key):
@@ -294,59 +308,59 @@ class SimMoveDemo(QMainWindow):
         elif key == Qt.Key_A:
             self.label30.setPixmap(self.pix12)
 
-        if key == Qt.Key_D and rec2.x() <= 660 and  (rec2.y() == 475 or rec2.y() == 385 or rec2.y() == 295 or rec2.y() == 205 or rec2.y() == 115 or rec2.y() == -15):
-            self.label30.setGeometry(rec2.x() + 10, rec2.y(), rec2.width(), rec2.height())
-        elif key == Qt.Key_A and rec2.x() >= 280 and (rec2.y() == 475 or rec2.y() == 385 or rec2.y() == 295 or rec2.y() == 205 or rec2.y() == 115 or rec2.y() == -15):
-            self.label30.setGeometry(rec2.x() - 10, rec2.y(), rec2.width(), rec2.height())
+        if key == Qt.Key_D and rec2.x() <= 660 and (rec2.y() == 475 or (rec2.y() == 380 and rec2.x() <= 640) or (rec2.y() == 285 and rec2.x() <= 630) or (rec2.y() == 185 and rec2.x() <= 610) or (rec2.y() == 95 and rec2.x() <= 580) or (rec2.y() == 0 and rec2.x() <= 540)):
+            self.label30.setGeometry(rec2.x() + 5, rec2.y(), rec2.width(), rec2.height())
+        elif key == Qt.Key_A and rec2.x() >= 280 and (rec2.y() == 475 or (rec2.y() == 380 and rec2.x() >= 300) or (rec2.y() == 285 and rec2.x() >= 310) or (rec2.y() == 185 and rec2.x() >= 330) or (rec2.y() == 95 and rec2.x() >= 340) or (rec2.y() == 0 and rec2.x() >= 380)):
+            self.label30.setGeometry(rec2.x() - 5, rec2.y(), rec2.width(), rec2.height())
         elif key == Qt.Key_W:
-            if (rec2.x() >= 445 and rec2.x() <= 465 and rec2.y() > 385 and rec2.y() <= 475):
-                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            if (rec2.x() >= 445 and rec2.x() <= 465 and rec2.y() > 380 and rec2.y() <= 475):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 5, rec2.width(), rec2.height())
                 if rec2.y() == 395:
                     self.poeniPL2 += 1
                     self.playerRez22.setText(str(self.poeniPL2))
-            elif (rec2.x() >= 290 and rec2.x() <= 310 and rec2.y() > 295 and rec2.y() <= 385):
-                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 290 and rec2.x() <= 310 and rec2.y() > 285 and rec2.y() <= 380):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 5, rec2.width(), rec2.height())
                 if rec2.y() == 305:
                     self.poeniPL2 += 1
                     self.playerRez22.setText(str(self.poeniPL2))
-            elif (rec2.x() >= 620 and rec2.x() <= 640 and rec2.y() > 205 and rec2.y() <= 295):
-                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 620 and rec2.x() <= 640 and rec2.y() > 185 and rec2.y() <= 285):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 5, rec2.width(), rec2.height())
                 if rec2.y() == 215:
                     self.poeniPL2 += 1
                     self.playerRez22.setText(str(self.poeniPL2))
-            elif (rec2.x() >= 320 and rec2.x() <= 340 and rec2.y() > 115 and rec2.y() <= 205):
-                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 320 and rec2.x() <= 340 and rec2.y() > 95 and rec2.y() <= 185):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 5, rec2.width(), rec2.height())
                 if rec2.y() == 125:
                     self.poeniPL2 += 1
                     self.playerRez22.setText(str(self.poeniPL2))
-            elif (rec2.x() >= 400 and rec2.x() <= 420 and rec2.y() > -15 and rec2.y() <= 115):
-                self.label30.setGeometry(rec2.x(), rec2.y() - 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 400 and rec2.x() <= 420 and rec2.y() > 0 and rec2.y() <= 95):
+                self.label30.setGeometry(rec2.x(), rec2.y() - 5, rec2.width(), rec2.height())
                 if rec2.y() == -5:
                     self.poeniPL2 += 1
                     self.playerRez22.setText(str(self.poeniPL2))
         elif key == Qt.Key_S:
-            if (rec2.x() >= 445 and rec2.x() <= 465 and rec2.y() >= 385 and rec2.y() < 475):
-                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            if (rec2.x() >= 445 and rec2.x() <= 465 and rec2.y() >= 380 and rec2.y() < 475):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 5, rec2.width(), rec2.height())
                 if rec2.y() == 395:
                     self.poeniPL2 -= 1
                     self.playerRez22.setText(str(self.poeniPL2))
-            elif (rec2.x() >= 290 and rec2.x() <= 310 and rec2.y() >= 295 and rec2.y() < 385):
-                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 290 and rec2.x() <= 310 and rec2.y() >= 285 and rec2.y() < 380):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 5, rec2.width(), rec2.height())
                 if rec2.y() == 305:
                     self.poeniPL2 -= 1
                     self.playerRez22.setText(str(self.poeniPL2))
-            elif (rec2.x() >= 620 and rec2.x() <= 640 and rec2.y() >= 205 and rec2.y() < 295):
-                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 620 and rec2.x() <= 640 and rec2.y() >= 185 and rec2.y() < 285):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 5, rec2.width(), rec2.height())
                 if rec2.y() == 215:
                     self.poeniPL2 -= 1
                     self.playerRez22.setText(str(self.poeniPL2))
-            elif (rec2.x() >= 320 and rec2.x() <= 340 and rec2.y() >= 115 and rec2.y() < 205):
-                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 320 and rec2.x() <= 340 and rec2.y() >= 95 and rec2.y() < 185):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 5, rec2.width(), rec2.height())
                 if rec2.y() == 125:
                     self.poeniPL2 -= 1
                     self.playerRez22.setText(str(self.poeniPL2))
-            elif (rec2.x() >= 400 and rec2.x() <= 420 and rec2.y() >= -15 and rec2.y() < 115):
-                self.label30.setGeometry(rec2.x(), rec2.y() + 10, rec2.width(), rec2.height())
+            elif (rec2.x() >= 400 and rec2.x() <= 420 and rec2.y() >= 0 and rec2.y() < 95):
+                self.label30.setGeometry(rec2.x(), rec2.y() + 5, rec2.width(), rec2.height())
                 if rec2.y() == -5:
                     self.poeniPL2 -= 1
                     self.playerRez22.setText(str(self.poeniPL2))
@@ -364,7 +378,7 @@ class SimMoveDemo(QMainWindow):
                 self.labelLifes1.setText(str(self.lives1))
                 self.labelLevel.setText(str(self.trenutniNivo))
             else:
-                if self.prvi and self.drugi:
+                if isHit(self.label2, self.label1) and isHit(self.label2, self.label30): #self.prvi and self.drugi:
                     self.trenutniNivo += 1
                     self.labelLevel.setText(str(self.trenutniNivo))
                     self.label1.setGeometry(280, 475, 75, 75)
@@ -387,8 +401,10 @@ class SimMoveDemo(QMainWindow):
                     self.labelLifes2.setText(str(self.lives2))
 
         if self.lives1 == 0:
+            self.label1.setGeometry(200, 475, 75, 75)
             self.label1.hide()
         elif self.lives2 == 0:
+            self.label30.setGeometry(200, 475, 75, 75)
             self.label30.hide()
 
         if self.lives1 == 0 and self.drugi:
@@ -397,6 +413,7 @@ class SimMoveDemo(QMainWindow):
             self.label30.setGeometry(660, 475, 75, 75)
             self.labelLevel.setText(str(self.trenutniNivo))
             self.label30.show()
+            self.izgubioPrvi = True
 
         if self.lives2 == 0 and self.prvi:
             self.prvi = False
@@ -404,8 +421,13 @@ class SimMoveDemo(QMainWindow):
             self.trenutniNivo += 1
             self.labelLevel.setText(str(self.trenutniNivo))
             self.label1.show()
+            self.izgubioDrugi = True
 
-        if self.lives1 == 0 and self.lives2 == 0:
+        if self.lives1 <= 0 and self.lives2 <= 0:
+            if self.izgubioPrvi:
+                self.kraj = GameOver(2, self.poeniPL2)
+            else:
+                self.kraj = GameOver(1, self.poeniPL1)
             self.close()
 
     def menjajSliku(self):
@@ -445,9 +467,17 @@ class SimMoveDemo(QMainWindow):
                 self.labelLifes1.setText(str(self.lives1))
                 if self.lives1 == 0:
                     if self.brojIgracaJedan:
+                        self.kraj = GameOver(1, self.poeniPL1)
                         self.close()
                     else:
+                        self.label1.setGeometry(200, 475, 75, 75)
                         self.label1.hide()
+
+                        if self.izgubioDrugi:
+                            self.kraj = GameOver(1, self.poeniPL1)
+                            self.close()
+                        else:
+                            self.izgubioPrvi = True
 
 
         if isHit(self.label30, self.label3):
@@ -455,7 +485,14 @@ class SimMoveDemo(QMainWindow):
                 self.lives2 -= 1
                 self.labelLifes2.setText(str(self.lives2))
                 if self.lives2 == 0:
+                    self.label30.setGeometry(200, 475, 75, 75)
                     self.label30.hide()
+
+                    if self.izgubioPrvi:
+                        self.kraj = GameOver(2, self.poeniPL2)
+                        self.close()
+                    else:
+                        self.izgubioDrugi = True
 
         if not self.zaustavio:
             self.gorilaStop.put(1)
@@ -496,9 +533,17 @@ class SimMoveDemo(QMainWindow):
 
                     if self.lives1 == 0:
                         if self.brojIgracaJedan:
+                            self.kraj = GameOver(1, self.poeniPL1)
                             self.close()
                         else:
+                            self.label1.setGeometry(200, 475, 75, 75)
                             self.label1.hide()
+
+                            if self.izgubioDrugi:
+                                self.kraj = GameOver(1, self.poeniPL1)
+                                self.close()
+                            else:
+                                self.izgubioPrvi = True
 
             if isHit(barrel, self.label30):
                 if self.lives2 > 0:
@@ -508,12 +553,81 @@ class SimMoveDemo(QMainWindow):
                     self.barrels.remove(barrel)
 
                     if self.lives2 == 0:
+                        self.label30.setGeometry(200, 475, 75, 75)
                         self.label30.hide()
+
+                        if self.izgubioPrvi:
+                            self.kraj = GameOver(2, self.poeniPL2)
+                            self.close()
+                        else:
+                            self.izgubioDrugi = True
+
+    def generateForce(self):
+        #a = randint(0, 100)
+        #if a % 73 == 0:
+
+        #heart = QLabel(self)
+        #self.hearts.append(heart)
+        #self.hearts[len(self.hearts) - 1].setPixmap(self.srce)
+        #self.hearts[len(self.hearts) - 1].setGeometry(randint(300, 600), randint(440, 475), 40, 40)
+        #self.hearts[len(self.hearts) - 1].show()
+
+        self.heart.setGeometry(randint(300, 600), 310, 40, 40)
+        self.heart.show()
+
+        self.timerP3 = QTimer(self)
+        self.timerP3.start(7000)
+        self.timerP3.timeout.connect(self.sakrij)
+
+        #for heart in self.hearts:
+        if isHit(self.heart, self.label1):
+            self.lives1 += randint(-2, 2)
+            self.labelLifes1.setText(str(self.lives1))
+            self.heart.hide()
+            #self.hearts.remove(heart)
+
+            if self.lives1 <= 0:
+                if self.brojIgracaJedan:
+                    self.kraj = GameOver(1, self.poeniPL1)
+                    self.close()
+                else:
+                    self.label1.setGeometry(200, 40, 75, 75)
+                    self.label1.hide()
+                    self.lives1 = 0
+                    self.labelLifes1.setText(str(self.lives1))
+
+                    if self.izgubioDrugi:
+                        self.kraj = GameOver(1, self.poeniPL1)
+                        self.close()
+                    else:
+                        self.izgubioPrvi = True
+
+        if isHit(self.heart, self.label30):
+            self.lives2 += randint(-2, 2)
+            self.labelLifes2.setText(str(self.lives2))
+            self.heart.hide()
+            #self.hearts.remove(heart)
+
+            if self.lives2 <= 0:
+                self.lives2 = 0
+                self.labelLifes2.setText(str(self.lives2))
+                self.label30.setGeometry(200, 40, 75, 75)
+                self.label30.hide()
+
+                if self.izgubioPrvi:
+                    self.kraj = GameOver(2, self.poeniPL2)
+                    self.close()
+                else:
+                    self.izgubioDrugi = True
+
+    def sakrij(self):
+        self.heart.hide()
 
     def closeEvent(self, event):
         self.jasminMovement.die()
         self.gorilaMovement.die()
         self.barrelProcess.terminate()
+        self.heartsMovement.die()
         self.movingBarrels.die()
         self.gorilaBug.terminate()
         self.key_notifier.die()
@@ -523,11 +637,6 @@ class SimMoveDemo(QMainWindow):
         self.barrelProcess.terminate()
         self.gorilaBug.terminate()
         self.close()
-
-
-
-        #self.close()
-       # self.one = SimMoveDemo(x, self.trenutniNivo + 1)
 
 if __name__ == '__main__':
      app = QApplication(sys.argv)
